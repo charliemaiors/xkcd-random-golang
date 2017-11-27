@@ -66,5 +66,5 @@ func getRandom() (string, string) {
 	if err != nil {
 		return "error", err.Error()
 	}
-	return comic.Title, comic.URL
+	return comic.Title, comic.ImageURL
 }
