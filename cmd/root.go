@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charliemaiors/xkcd-random-golang/xkcd"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,16 +28,14 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "xkcd-random-golang",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "This is a simple webserver for xkcd random comic retrieving ",
+	Long: `This web server uses letsencrypt for random comic retrieve, is defined only for education purposes in order to 
+	show how letsencrypt and acme works`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		xkcd.RunSrv()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -48,41 +47,22 @@ func Execute() {
 	}
 }
 
-func init() { 
-	cobra.OnInitialize(initConfig)
+func init() {
+	cobra.OnInitialize(viper.AutomaticEnv)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.xkcd-random-golang.yaml)")
+	RootCmd.PersistentFlags().String("domain", "example.com", "Specify your dns name where application is currently listening")
+	viper.BindPFlag("domain", RootCmd.PersistentFlags().Lookup("domain"))
+	viper.SetDefault("domain", "example.com")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Search config in home directory with name ".xkcd-random-golang" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".xkcd-random-golang")
+	dir, err := homedir.Dir()
+	if err != nil {
+		panic(err)
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
+	RootCmd.PersistentFlags().String("certdir", dir, "Default directory for certificates")
+	viper.BindPFlag("certdir", RootCmd.PersistentFlags().Lookup("certdir"))
+	viper.SetDefault("certdir", dir)
 }
